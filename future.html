@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movie Night Planner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#7C3AED',
+            'primary-dark': '#5B21B6',
+            'primary-light': '#DDD6FE',
+            secondary: '#10B981',
+            'secondary-dark': '#059669',
+            dark: '#1F2937',
+            'dark-light': '#374151',
+            light: '#F9FAFB',
+            'light-dark': '#E5E7EB',
+            futuristic: {
+              blue: '#0EA5E9',
+              cyan: '#22D3EE',
+              purple: '#A855F7',
+              violet: '#8B5CF6'
+            }
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.3s ease-out',
+            'bounce-in': 'bounceIn 0.5s ease-out',
+            'typing': 'typing 1.5s steps(3, end) infinite',
+            'pulse-soft': 'pulseSoft 4s ease-in-out infinite',
+            'float': 'float 6s ease-in-out infinite',
+            'glow': 'glow 3s ease-in-out infinite alternate',
+          },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: '0', transform: 'translateY(10px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' }
+            },
+            bounceIn: {
+              '0%': { opacity: '0', transform: 'scale(0.8)' },
+              '70%': { transform: 'scale(1.05)' },
+              '100%': { opacity: '1', transform: 'scale(1)' }
+            },
+            typing: {
+              '0%': { width: '0.25em' },
+              '50%': { width: '1.25em' },
+              '100%': { width: '0.25em' }
+            },
+            pulseSoft: {
+              '0%, 100%': { opacity: '0.7' },
+              '50%': { opacity: '1' }
+            },
+            float: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-10px)' }
+            },
+            glow: {
+              '0%': { boxShadow: '0 0 5px rgba(14, 165, 233, 0.3)' },
+              '100%': { boxShadow: '0 0 20px rgba(14, 165, 233, 0.6)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #F9FAFB;
+    }
+    
+    /* Modern scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background-color: rgba(156, 163, 175, 0.5);
+      border-radius: 20px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background-color: rgba(107, 114, 128, 0.7);
+    }
+    
+    /* Typing animation */
+    .typing-dots::after {
+      content: "...";
+      width: 0;
+      display: inline-block;
+      overflow: hidden;
+      vertical-align: bottom;
+      animation: typing 1.5s steps(3, end) infinite;
+    }
+    
+    /* Message slide-in animation */
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .message-slide-in {
+      animation: slideIn 0.3s ease forwards;
+    }
+
+    /* Reg number tooltip */
+    .reg-tooltip {
+      visibility: hidden;
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #1F2937;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.3s;
+      margin-bottom: 5px;
+    }
+
+    .reg-button:hover .reg-tooltip {
+      visibility: visible;
+      opacity: 1;
+    }
+    
+    /* Futuristic background */
+    .futuristic-bg {
+      background: linear-gradient(120deg, #f0f9ff, #e0f2fe);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .futuristic-bg::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        radial-gradient(circle at 20% 30%, rgba(14, 165, 233, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(168, 85, 247, 0.1) 0%, transparent 50%);
+      z-index: 0;
+    }
+    
+    .futuristic-pattern {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: 
+        linear-gradient(to right, rgba(224, 242, 254, 0.5) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(224, 242, 254, 0.5) 1px, transparent 1px);
+      background-size: 20px 20px;
+      z-index: 0;
+    }
+    
+    .futuristic-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(20px);
+      z-index: 0;
+      opacity: 0.5;
+    }
+    
+    /* Glass effect */
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+    
+    .pulse-effect {
+      animation: pulseSoft 4s ease-in-out infinite;
+    }
+    
+    /* History item hover effect */
+    .history-item {
+      transition: all 0.2s ease;
+    }
+    
+    .history-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+  </style>
+</head>
+<body class="futuristic-bg">
+  <!-- Futuristic background elements -->
+  <div class="futuristic-pattern"></div>
+  <div class="futuristic-orb bg-futuristic-blue animate-pulse-soft" style="width: 200px; height: 200px; top: 10%; left: 5%;"></div>
+  <div class="futuristic-orb bg-futuristic-purple animate-pulse-soft" style="width: 300px; height: 300px; bottom: 10%; right: 5%; animation-delay: 1s;"></div>
+  <div class="futuristic-orb bg-futuristic-cyan animate-float" style="width: 150px; height: 150px; top: 20%; right: 20%; animation-delay: 2s;"></div>
+  
+  <div class="flex flex-col h-screen max-w-5xl mx-auto relative z-10">
+    <div class="flex flex-1 gap-4 p-4 h-full">
+      <!-- Main chat panel -->
+      <div class="flex flex-col flex-1 glass-effect rounded-2xl shadow-lg overflow-hidden animate-fade-in">
+        <!-- Header -->
+        <div class="flex items-center justify-between p-4 border-b bg-white/70 shadow-sm">
+          <div class="flex items-center gap-3">
+            <div class="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-futuristic-blue to-futuristic-purple text-white animate-glow">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
+                <path d="M19.82 2H4.18A2.18 2.18 0 0 0 2 4.18v15.64A2.18 2.18 0 0 0 4.18 22h15.64A2.18 2.18 0 0 0 22 19.82V4.18A2.18 2.18 0 0 0 19.82 2Z"></path>
+                <path d="M7 2v20"></path>
+                <path d="M17 2v20"></path>
+                <path d="M2 12h20"></path>
+                <path d="M2 7h5"></path>
+                <path d="M2 17h5"></path>
+                <path d="M17 17h5"></path>
+                <path d="M17 7h5"></path>
+              </svg>
+            </div>
+            <div>
+              <h1 class="text-lg font-semibold text-gray-900">Movie Night Planner</h1>
+              <p class="text-xs text-gray-500">AI-Powered Film Recommendations</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="flex h-2 w-2 relative">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-futuristic-blue opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-futuristic-blue"></span>
+            </span>
+            <span class="text-xs text-gray-500">Online</span>
+            
+            <!-- Search history toggle button -->
+            <button id="history-toggle" class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 relative mr-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </button>
+            
+            <!-- Registration Number Button -->
+            <button id="reg-button" class="reg-button flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 relative">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
+                <path d="M12 21a9 9 0 0 1-9-9 9 9 0 0 1 9-9 9 9 0 0 1 9 9 9 9 0 0 1-9 9Z"></path>
+                <path d="M12 11v2"></path>
+                <path d="M12 8h.01"></path>
+              </svg>
+              <span class="reg-tooltip">REG NO-12307582,12307052,12319064</span>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Chat messages -->
+        <div class="flex-1 overflow-auto px-4 py-2 bg-transparent">
+          <div class="flex flex-col space-y-4 py-4" id="chat-messages">
+            <!-- Initial message will be added here by JS -->
+          </div>
+        </div>
+        
+        <!-- Chat input -->
+        <div class="border-t border-gray-200/50 bg-white/70 p-4">
+          <!-- API Key notification -->
+          <div id="api-key-container" class="mb-3 p-3 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 text-sm">
+            <div class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+              <p>To enable AI responses, type <code class="px-1 py-0.5 rounded bg-blue-100 font-mono text-xs">/key YOUR_GEMINI_API_KEY</code></p>
+            </div>
+          </div>
+          
+          <!-- Input form -->
+          <form id="chat-form" class="flex items-center gap-2">
+            <div class="relative flex-1">
+              <input
+                type="text"
+                id="message-input"
+                placeholder="Ask about movies or planning..."
+                class="w-full p-3 pr-10 rounded-full border border-gray-300/70 bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-futuristic-blue focus:border-transparent"
+              />
+              <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
+                  <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm0 16v-2m0-6v-2m0-2V6"></path>
+                </svg>
+              </button>
+            </div>
+            <button
+              type="submit"
+              id="send-button"
+              class="bg-gradient-to-r from-futuristic-blue to-futuristic-violet hover:opacity-90 text-white rounded-full p-3 flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-futuristic-blue focus:ring-offset-2"
+            >
+              <svg id="send-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
+                <path d="m22 2-7 20-4-9-9-4Z"></path>
+                <path d="M22 2 11 13"></path>
+              </svg>
+              <svg id="loading-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 animate-spin hidden">
+                <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+              </svg>
+            </button>
+          </form>
+          
+          <!-- Footer with reg number -->
+          <div class="flex items-center justify-between mt-3">
+            <p class="text-xs text-gray-500">
+              Powered by Gemini AI • Find your perfect movie experience
+            </p>
+            <button id="reg-button-footer" class="text-xs text-gray-500 hover:text-futuristic-blue transition-colors">
+              REG NO-12307582,12307052,12319064
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Search History Panel (hidden by default) -->
+      <div id="history-panel" class="w-72 glass-effect rounded-2xl shadow-lg p-4 hidden animate-fade-in">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold text-gray-800 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            Search History
+          </h3>
+          <button id="clear-history" class="text-xs text-red-500 hover:text-red-700 transition-colors">
+            Clear All
+          </button>
+        </div>
+        
+        <!-- History items container -->
+        <div id="history-items" class="overflow-y-auto max-h-[calc(100vh-180px)] space-y-2">
+          <!-- History items will be added here by JS -->
+          <div class="flex items-center justify-center text-sm text-gray-500 py-8">
+            No search history yet
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Registration Number Modal -->
+  <div id="reg-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4 animate-bounce-in">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold text-gray-900">Registration Information</h3>
+        <button id="close-modal" class="text-gray-500 hover:text-gray-700">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="py-3 border-t border-b border-gray-200">
+        <p class="text-gray-800 font-medium mb-2">Registration Numbers:</p>
+        <ul class="list-disc pl-5 text-gray-600">
+          <li>12307582</li>
+          <li>12307052</li>
+          <li>12319064</li>
+        </ul>
+      </div>
+      <div class="mt-4 flex justify-end">
+        <button id="close-btn" class="px-4 py-2 bg-gradient-to-r from-futuristic-blue to-futuristic-purple text-white rounded-md hover:opacity-90 transition-colors">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Global variables
+    let apiKey = localStorage.getItem('gemini_api_key') || '';
+    let isProcessing = false;
+    let searchHistory = JSON.parse(localStorage.getItem('search_history') || '[]');
+    let isHistoryPanelVisible = false;
+    
+    // Message data
+    const messages = [
+      {
+        id: Date.now().toString(),
+        content: "Hi there! 👋 I'm your Movie Night Planner. I can help you find the perfect film, create themed movie nights, suggest snacks, and plan viewing schedules. What kind of movie experience are you looking for today?",
+        sender: 'assistant',
+        timestamp: new Date()
+      }
+    ];
+
+    // Registration Number Modal Functions
+    function openRegModal() {
+      document.getElementById('reg-modal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeRegModal() {
+      document.getElementById('reg-modal').classList.add('hidden');
+      document.body.style.overflow = 'auto';
+    }
+
+    // Add event listeners for reg modal
+    document.getElementById('reg-button').addEventListener('click', openRegModal);
+    document.getElementById('reg-button-footer').addEventListener('click', openRegModal);
+    document.getElementById('close-modal').addEventListener('click', closeRegModal);
+    document.getElementById('close-btn').addEventListener('click', closeRegModal);
+    
+    // Close modal when clicking outside
+    document.getElementById('reg-modal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeRegModal();
+      }
+    });
+
+    // Update API key notification visibility
+    function updateApiKeyNotification() {
+      const apiKeyContainer = document.getElementById('api-key-container');
+      if (apiKey) {
+        apiKeyContainer.classList.add('hidden');
+      } else {
+        apiKeyContainer.classList.remove('hidden');
+      }
+    }
+
+    // Functions to handle messages
+    function renderMessages() {
+      const messagesContainer = document.getElementById('chat-messages');
+      messagesContainer.innerHTML = '';
+      
+      messages.forEach(message => {
+        messagesContainer.appendChild(createMessageElement(message));
+      });
+      
+      // Scroll to bottom
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    
+    function createMessageElement(message) {
+      const isUser = message.sender === 'user';
+      
+      // Create message container
+      const container = document.createElement('div');
+      container.className = `flex w-full message-slide-in ${isUser ? 'justify-end' : 'justify-start'}`;
+      
+      // Create message max width wrapper
+      const wrapper = document.createElement('div');
+      wrapper.className = `max-w-[80%]`;
+      
+      // Create bubble with avatar for assistant messages
+      const bubbleContainer = document.createElement('div');
+      bubbleContainer.className = `flex items-end gap-2 ${isUser ? 'flex-row-reverse' : 'flex-row'}`;
+      
+      // Create avatar for assistant messages
+      if (!isUser) {
+        const avatar = document.createElement('div');
+        avatar.className = 'flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-futuristic-blue to-futuristic-purple flex items-center justify-center text-white';
+        avatar.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19.82 2H4.18A2.18 2.18 0 0 0 2 4.18v15.64A2.18 2.18 0 0 0 4.18 22h15.64A2.18 2.18 0 0 0 22 19.82V4.18A2.18 2.18 0 0 0 19.82 2Z"></path>
+            <path d="M7 2v20"></path>
+            <path d="M17 2v20"></path>
+            <path d="M2 12h20"></path>
+            <path d="M2 7h5"></path>
+            <path d="M2 17h5"></path>
+            <path d="M17 17h5"></path>
+            <path d="M17 7h5"></path>
+          </svg>
+        `;
+        bubbleContainer.appendChild(avatar);
+      }
+      
+      // Create message bubble
+      const bubble = document.createElement('div');
+      bubble.className = `py-2 px-4 rounded-2xl ${
+        isUser 
+          ? 'bg-gradient-to-r from-futuristic-blue to-futuristic-violet text-white rounded-tr-none' 
+          : 'bg-white/80 backdrop-blur-sm text-gray-800 shadow-sm rounded-tl-none'
+      }`;
+      
+      // Create message text
+      const text = document.createElement('p');
+      text.className = 'text-sm';
+      text.textContent = message.content;
+      
+      // Create timestamp
+      const timestamp = document.createElement('div');
+      timestamp.className = `text-[10px] mt-1 ${isUser ? 'text-right text-blue-100' : 'text-gray-500'}`;
+      timestamp.textContent = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
+      // Assemble message elements
+      bubble.appendChild(text);
+      bubble.appendChild(timestamp);
+      bubbleContainer.appendChild(bubble);
+      wrapper.appendChild(bubbleContainer);
+      container.appendChild(wrapper);
+      
+      return container;
+    }
+    
+    function addMessage(content, sender) {
+      const message = {
+        id: Date.now().toString(),
+        content,
+        sender,
+        timestamp: new Date()
+      };
+      
+      messages.push(message);
+      renderMessages();
+      
+      // Add to search history if it's a user message
+      if (sender === 'user') {
+        addToSearchHistory(content);
+      }
+    }
+    
+    // Show typing indicator
+    function showTypingIndicator() {
+      const messagesContainer = document.getElementById('chat-messages');
+      const typingIndicator = document.createElement('div');
+      typingIndicator.id = 'typing-indicator';
+      typingIndicator.className = 'flex w-full justify-start message-slide-in';
+      
+      const wrapper = document.createElement('div');
+      wrapper.className = 'max-w-[80%]';
+      
+      const bubbleContainer = document.createElement('div');
+      bubbleContainer.className = 'flex items-end gap-2';
+      
+      const avatar = document.createElement('div');
+      avatar.className = 'flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-futuristic-blue to-futuristic-purple flex items-center justify-center text-white';
+      avatar.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19.82 2H4.18A2.18 2.18 0 0 0 2 4.18v15.64A2.18 2.18 0 0 0 4.18 22h15.64A2.18 2.18 0 0 0 22 19.82V4.18A2.18 2.18 0 0 0 19.82 2Z"></path>
+          <path d="M7 2v20"></path>
+          <path d="M17 2v20"></path>
+          <path d="M2 12h20"></path>
+          <path d="M2 7h5"></path>
+          <path d="M2 17h5"></path>
+          <path d="M17 17h5"></path>
+          <path d="M17 7h5"></path>
+        </svg>
+      `;
+      
+      const bubble = document.createElement('div');
+      bubble.className = 'py-2 px-4 rounded-2xl bg-white/80 backdrop-blur-sm text-gray-800 shadow-sm rounded-tl-none';
+      
+      const dots = document.createElement('div');
+      dots.className = 'flex space-x-1';
+      
+      for (let i = 0; i < 3; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'w-2 h-2 rounded-full bg-futuristic-blue animate-bounce';
+        dot.style.animationDelay = `${i * 0.15}s`;
+        dots.appendChild(dot);
+      }
+      
+      bubble.appendChild(dots);
+      bubbleContainer.appendChild(avatar);
+      bubbleContainer.appendChild(bubble);
+      wrapper.appendChild(bubbleContainer);
+      typingIndicator.appendChild(wrapper);
+      
+      messagesContainer.appendChild(typingIndicator);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    
+    // Hide typing indicator
+    function hideTypingIndicator() {
+      const typingIndicator = document.getElementById('typing-indicator');
+      if (typingIndicator) {
+        typingIndicator.remove();
+      }
+    }
+    
+    // Gemini API integration
+    async function sendMessageToGemini(message, apiKey) {
+  if (!apiKey || apiKey.trim() === '') {
+    return {
+      content: "Please provide a valid Gemini API key to enable AI responses.",
+      error: "Missing API key"
+    };
+  }
+
+  try {
+    const response = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                { 
+                  text: `You are a Movie Night Planner assistant. You ONLY answer questions about movies, film recommendations, cinema, actors, directors, or movie night planning. If the user asks about anything else, politely decline and remind them you can only help with movie-related queries. Keep your responses brief and to the point - no more than 2-3 short sentences when possible. The user's message is: ${message}` 
+                }
+              ]
+            }
+          ],
+          generationConfig: {
+            maxOutputTokens: 200,
+            temperature: 0.7
+          }
+        })
+      }
+    );
+
+    if (!response.ok) {
+      const errorResponse = await response.json();
+      console.error("Gemini API Error Response:", errorResponse);
+      return {
+        content: "I'm having trouble connecting to my movie database. Please try again later.",
+        error: errorResponse.error?.message || "API request failed"
+      };
+    }
+
+    const data = await response.json();
+    if (!data?.candidates?.length) {
+      return {
+        content: "No movie recommendations generated. Please try again.",
+        error: "Empty API response"
+      };
+    }
+
+    return {
+      content: data.candidates[0].content.parts[0].text
+    };
+  } catch (error) {
+    console.error('Gemini API error:', error);
+    return {
+      content: "I've encountered an error in my recommendation engine. Please try again.",
+      error: error instanceof Error ? error.message : "Unknown error"
+    };
+  }
+}
+    
+    // Update UI for processing state
+    function setProcessingState(processing) {
+      isProcessing = processing;
+      const sendIcon = document.getElementById('send-icon');
+      const loadingIcon = document.getElementById('loading-icon');
+      const messageInput = document.getElementById('message-input');
+      const sendButton = document.getElementById('send-button');
+      
+      if (processing) {
+        sendIcon.classList.add('hidden');
+        loadingIcon.classList.remove('hidden');
+        messageInput.disabled = true;
+        sendButton.disabled = true;
+        showTypingIndicator();
+      } else {
+        sendIcon.classList.remove('hidden');
+        loadingIcon.classList.add('hidden');
+        messageInput.disabled = false;
+        sendButton.disabled = false;
+        hideTypingIndicator();
+      }
+    }
+    
+    // Show toast notification
+    function showToast(title, message, isError = false) {
+      // Create toast container if it doesn't exist
+      let toastContainer = document.getElementById('toast-container');
+      if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.className = 'fixed bottom-4 right-4 z-50 flex flex-col gap-2';
+        document.body.appendChild(toastContainer);
+      }
+      
+      // Create toast
+      const toast = document.createElement('div');
+      toast.className = `p-4 rounded-lg shadow-lg ${isError ? 'bg-red-500' : 'bg-gradient-to-r from-futuristic-blue to-futuristic-purple'} text-white flex items-center gap-3 max-w-xs animate-bounce-in`;
+      
+      // Add icon
+      const icon = document.createElement('div');
+      icon.innerHTML = isError
+        ? `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`
+        : `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+      toast.appendChild(icon);
+      
+      // Add content
+      const content = document.createElement('div');
+      content.className = 'flex-1';
+      
+      // Add title
+      const titleElement = document.createElement('div');
+      titleElement.className = 'font-medium text-sm';
+      titleElement.textContent = title;
+      content.appendChild(titleElement);
+      
+      // Add message
+      const messageElement = document.createElement('div');
+      messageElement.className = 'text-xs text-white/90';
+      messageElement.textContent = message;
+      content.appendChild(messageElement);
+      
+      toast.appendChild(content);
+      
+      // Add to container
+      toastContainer.appendChild(toast);
+      
+      // Remove after timeout
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-10px)';
+        toast.style.transition = 'opacity 0.3s, transform 0.3s';
+        setTimeout(() => {
+          toast.remove();
+        }, 300);
+      }, 5000);
+    }
+    
+    // Search History Functions
+    function addToSearchHistory(query) {
+      // Only keep unique queries and limit to 20 items
+      if (!searchHistory.some(item => item.text === query)) {
+        const historyItem = {
+          id: Date.now().toString(),
+          text: query,
+          timestamp: new Date().toISOString()
+        };
+        
+        searchHistory.unshift(historyItem); // Add to the beginning
+        
+        // Limit to 20 items
+        if (searchHistory.length > 20) {
+          searchHistory = searchHistory.slice(0, 20);
+        }
+        
+        // Save to localStorage
+        localStorage.setItem('search_history', JSON.stringify(searchHistory));
+        
+        // Render history if panel is visible
+        if (isHistoryPanelVisible) {
+          renderSearchHistory();
+        }
+      }
+    }
+    
+    function renderSearchHistory() {
+      const historyContainer = document.getElementById('history-items');
+      historyContainer.innerHTML = '';
+      
+      if (searchHistory.length === 0) {
+        const emptyState = document.createElement('div');
+        emptyState.className = 'flex items-center justify-center text-sm text-gray-500 py-8';
+        emptyState.textContent = 'No search history yet';
+        historyContainer.appendChild(emptyState);
+        return;
+      }
+      
+      searchHistory.forEach(item => {
+        const historyItem = document.createElement('div');
+        historyItem.className = 'history-item bg-white/80 backdrop-blur-sm rounded-lg p-3 shadow-sm';
+        historyItem.dataset.id = item.id;
+        
+        const itemContent = document.createElement('div');
+        itemContent.className = 'flex justify-between items-center';
+        
+        // Query text
+        const text = document.createElement('p');
+        text.className = 'text-xs font-medium text-gray-800 truncate flex-1 cursor-pointer';
+        text.textContent = item.text;
+        text.addEventListener('click', () => {
+          document.getElementById('message-input').value = item.text;
+          document.getElementById('message-input').focus();
+        });
+        
+        // Delete button
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'text-gray-400 hover:text-red-500 ml-2';
+        deleteButton.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18"></path>
+            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+          </svg>
+        `;
+        deleteButton.addEventListener('click', () => deleteHistoryItem(item.id));
+        
+        // Time
+        const time = document.createElement('p');
+        time.className = 'text-[10px] text-gray-500 mt-1';
+        time.textContent = new Date(item.timestamp).toLocaleString([], { 
+          month: 'short', 
+          day: 'numeric', 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        });
+        
+        itemContent.appendChild(text);
+        itemContent.appendChild(deleteButton);
+        
+        historyItem.appendChild(itemContent);
+        historyItem.appendChild(time);
+        
+        historyContainer.appendChild(historyItem);
+      });
+    }
+    
+    function deleteHistoryItem(id) {
+      searchHistory = searchHistory.filter(item => item.id !== id);
+      localStorage.setItem('search_history', JSON.stringify(searchHistory));
+      renderSearchHistory();
+    }
+    
+    function clearAllHistory() {
+      searchHistory = [];
+      localStorage.setItem('search_history', JSON.stringify(searchHistory));
+      renderSearchHistory();
+      showToast('History Cleared', 'Your search history has been deleted');
+    }
+    
+    function toggleHistoryPanel() {
+      const historyPanel = document.getElementById('history-panel');
+      isHistoryPanelVisible = !isHistoryPanelVisible;
+      
+      if (isHistoryPanelVisible) {
+        historyPanel.classList.remove('hidden');
+        renderSearchHistory();
+      } else {
+        historyPanel.classList.add('hidden');
+      }
+    }
+    
+    // Event listeners
+    document.getElementById('chat-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = document.getElementById('message-input');
+      const message = input.value.trim();
+      
+      if (message && !isProcessing) {
+        // Special command to set API key
+        if (message.startsWith('/key ')) {
+          const newApiKey = message.replace('/key ', '').trim();
+          apiKey = newApiKey;
+          localStorage.setItem('gemini_api_key', newApiKey);
+          updateApiKeyNotification();
+          showToast('API Key Updated', 'Your Gemini API key has been saved.');
+          input.value = '';
+          return;
+        }
+        
+        // Add user message
+        addMessage(message, 'user');
+        input.value = '';
+        
+        // Set processing state
+        setProcessingState(true);
+        
+        // Add a small delay to show the typing indicator
+        setTimeout(async () => {
+          try {
+            // Get response from Gemini
+            const aiResponse = await sendMessageToGemini(message, apiKey);
+            
+            if (aiResponse.error) {
+              showToast('Error', aiResponse.error, true);
+            }
+            
+            // Add AI response
+            addMessage(aiResponse.content, 'assistant');
+          } catch (error) {
+            console.error('Error getting AI response:', error);
+            
+            // Fallback message
+            addMessage("I'm experiencing a temporary issue with our movie database. Please try again later.", 'assistant');
+            showToast('Error', error.message || 'An unknown error occurred', true);
+          } finally {
+            // Reset processing state
+            setProcessingState(false);
+          }
+        }, 1000);
+      }
+    });
+    
+    // History panel toggle
+    document.getElementById('history-toggle').addEventListener('click', toggleHistoryPanel);
+    
+    // Clear history button
+    document.getElementById('clear-history').addEventListener('click', () => {
+      if (confirm('Are you sure you want to clear all search history?')) {
+        clearAllHistory();
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderMessages();
+      updateApiKeyNotification();
+      document.getElementById('message-input').focus();
+    });
+  </script>
+</body>
+</html>
